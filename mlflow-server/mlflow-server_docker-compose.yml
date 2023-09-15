@@ -1,0 +1,42 @@
+
+version: '3'
+
+services:
+  mysql:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: Gurufootball
+      MYSQL_DATABASE: mlflow
+      MYSQL_USER: mlflow_user
+      MYSQL_PASSWORD: mlflow_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  minio:
+    image: minio/minio:latest
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ACCESS_KEY: minio_access_key
+      MINIO_SECRET_KEY: minio_secret_key
+    command: server /data
+
+  mlflow:
+    build:
+      context: ./mlflow
+      dockerfile: Dockerfile
+    environment:
+      MLFLOW_TRACKING_URI: mysql://mlflow_user:mlflow_password@mysql:3306/mlflow
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: minio_access_key
+      AWS_SECRET_ACCESS_KEY: minio_secret_key
+    ports:
+      - "5050:5000"
+    depends_on:
+      - mysql
+      - minio
+
+volumes:
+  mysql-data:
+  minio-data:
+
