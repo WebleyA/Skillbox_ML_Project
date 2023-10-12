@@ -13,6 +13,8 @@ services:
             - MINIO_ROOT_PASSWORD=${AWS_SECRET_ACCESS_KEY}
         volumes:
             - minio_data:/data
+        networks:
+            - mlflow_net
 
     mc:
         image: minio/mc@sha256:3455a7bae6058ea83f797a95c0e29a4daedff6f79b1f87a0ede429e0344734ab
@@ -44,7 +46,8 @@ services:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
         volumes:
             - dbdata:/var/lib/mysql
-
+        networks:
+            - mlflow_net
     web:
         restart: always
         build: ./mlflow
@@ -60,7 +63,12 @@ services:
             - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
         command: mlflow server --backend-store-uri mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE} --default-artifact-root s3://mlflow/ --host 0.0.0.0 --port 5050
-
+        networks:
+            - mlflow_net
 volumes:
     dbdata:
     minio_data:
+
+networks:
+  mlflow_net:
+    driver: bridge
